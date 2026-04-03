@@ -1,0 +1,9 @@
+dependencies {
+    api project(':common')
+    api project(':account-domain')
+    api project(':transaction-domain')
+
+    implementation 'org.springframework:spring-context'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+}
+

@@ -1,0 +1,13 @@
+rootProject.name = 'banking-system'
+
+include 'common'
+include 'account-domain'
+include 'transaction-domain'
+include 'transfer-domain'
+include 'interest-domain'
+include 'channel-api'
+include 'channel-security'
+include 'information-read'
+include 'batch'
+include 'bootstrap'
+

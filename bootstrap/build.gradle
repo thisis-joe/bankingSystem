@@ -1,0 +1,18 @@
+dependencies {
+    implementation project(':common')
+    implementation project(':account-domain')
+    implementation project(':transaction-domain')
+    implementation project(':transfer-domain')
+    implementation project(':interest-domain')
+    implementation project(':channel-api')
+    implementation project(':channel-security')
+    implementation project(':information-read')
+    implementation project(':batch')
+
+    implementation 'org.springframework.boot:spring-boot-starter'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+

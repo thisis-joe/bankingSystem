@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: banking-system
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+

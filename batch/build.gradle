@@ -1,0 +1,9 @@
+dependencies {
+    api project(':common')
+    api project(':transfer-domain')
+    api project(':interest-domain')
+    api project(':information-read')
+
+    implementation 'org.springframework.boot:spring-boot-starter-batch'
+}
+
