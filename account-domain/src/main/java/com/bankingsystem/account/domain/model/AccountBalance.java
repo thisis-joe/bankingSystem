@@ -10,10 +10,13 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 @Entity
 @Table(name = "account_balance")
 public class AccountBalance extends BaseEntity {
+
+    private static final int SCALE = 2;
 
     @Id
     @Column(name = "account_id")
@@ -50,10 +53,24 @@ public class AccountBalance extends BaseEntity {
         BigDecimal holdAmount
     ) {
         this.account = account;
-        this.ledgerBalance = ledgerBalance;
-        this.availableBalance = availableBalance;
-        this.holdAmount = holdAmount;
+        this.ledgerBalance = normalize(ledgerBalance);
+        this.availableBalance = normalize(availableBalance);
+        this.holdAmount = normalize(holdAmount);
         account.assignBalance(this);
+    }
+
+    public void deposit(BigDecimal amount, Long lastTransactionId) {
+        BigDecimal normalizedAmount = normalize(amount);
+        this.ledgerBalance = this.ledgerBalance.add(normalizedAmount);
+        this.availableBalance = this.availableBalance.add(normalizedAmount);
+        this.lastTransactionId = lastTransactionId;
+    }
+
+    public void withdraw(BigDecimal amount, Long lastTransactionId) {
+        BigDecimal normalizedAmount = normalize(amount);
+        this.ledgerBalance = this.ledgerBalance.subtract(normalizedAmount);
+        this.availableBalance = this.availableBalance.subtract(normalizedAmount);
+        this.lastTransactionId = lastTransactionId;
     }
 
     public Long getAccountId() {
@@ -82,5 +99,9 @@ public class AccountBalance extends BaseEntity {
 
     public Long getVersion() {
         return version;
+    }
+
+    private BigDecimal normalize(BigDecimal value) {
+        return value.setScale(SCALE, RoundingMode.HALF_UP);
     }
 }
