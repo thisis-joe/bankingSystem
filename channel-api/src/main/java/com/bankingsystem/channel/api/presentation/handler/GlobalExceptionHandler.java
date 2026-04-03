@@ -1,5 +1,6 @@
 package com.bankingsystem.channel.api.presentation.handler;
 
+import com.bankingsystem.channel.api.application.support.RequestAuditSupport;
 import com.bankingsystem.channel.api.presentation.response.ApiErrorResponse;
 import com.bankingsystem.common.exception.BankingException;
 import com.bankingsystem.common.exception.ErrorCode;
@@ -7,9 +8,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.time.OffsetDateTime;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -25,7 +28,8 @@ public class GlobalExceptionHandler {
                 errorCode.getCode(),
                 exception.getMessage(),
                 request.getRequestURI(),
-                OffsetDateTime.now()
+                OffsetDateTime.now(),
+                RequestAuditSupport.resolveTraceId(request)
             ));
     }
 
@@ -46,7 +50,38 @@ public class GlobalExceptionHandler {
                 ErrorCode.VALIDATION_ERROR.getCode(),
                 message,
                 request.getRequestURI(),
-                OffsetDateTime.now()
+                OffsetDateTime.now(),
+                RequestAuditSupport.resolveTraceId(request)
+            ));
+    }
+
+    @ExceptionHandler(MissingRequestHeaderException.class)
+    public ResponseEntity<ApiErrorResponse> handleMissingHeaderException(
+        MissingRequestHeaderException exception,
+        HttpServletRequest request
+    ) {
+        return ResponseEntity.status(ErrorCode.VALIDATION_ERROR.getHttpStatus())
+            .body(new ApiErrorResponse(
+                ErrorCode.VALIDATION_ERROR.getCode(),
+                exception.getHeaderName() + " 헤더는 필수입니다.",
+                request.getRequestURI(),
+                OffsetDateTime.now(),
+                RequestAuditSupport.resolveTraceId(request)
+            ));
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiErrorResponse> handleUnreadableMessageException(
+        HttpMessageNotReadableException exception,
+        HttpServletRequest request
+    ) {
+        return ResponseEntity.status(ErrorCode.VALIDATION_ERROR.getHttpStatus())
+            .body(new ApiErrorResponse(
+                ErrorCode.VALIDATION_ERROR.getCode(),
+                "요청 본문 형식이 올바르지 않습니다.",
+                request.getRequestURI(),
+                OffsetDateTime.now(),
+                RequestAuditSupport.resolveTraceId(request)
             ));
     }
 
@@ -60,7 +95,8 @@ public class GlobalExceptionHandler {
                 ErrorCode.INTERNAL_SERVER_ERROR.getCode(),
                 ErrorCode.INTERNAL_SERVER_ERROR.getMessage(),
                 request.getRequestURI(),
-                OffsetDateTime.now()
+                OffsetDateTime.now(),
+                RequestAuditSupport.resolveTraceId(request)
             ));
     }
 }

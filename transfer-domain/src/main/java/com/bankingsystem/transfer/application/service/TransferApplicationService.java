@@ -19,6 +19,7 @@ import com.bankingsystem.transfer.application.command.TransferCommand;
 import com.bankingsystem.transfer.application.command.WithdrawalCommand;
 import com.bankingsystem.transfer.application.port.out.TransactionPostingProcessor;
 import com.bankingsystem.transfer.application.result.TransferResult;
+import com.bankingsystem.transfer.application.support.TransactionIdempotencyResolver;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -32,21 +33,33 @@ public class TransferApplicationService {
     private final AccountBalanceRepository accountBalanceRepository;
     private final BankTransactionRepository bankTransactionRepository;
     private final TransactionPostingProcessor transactionPostingProcessor;
+    private final TransactionIdempotencyResolver transactionIdempotencyResolver;
 
     public TransferApplicationService(
         AccountRepository accountRepository,
         AccountBalanceRepository accountBalanceRepository,
         BankTransactionRepository bankTransactionRepository,
-        TransactionPostingProcessor transactionPostingProcessor
+        TransactionPostingProcessor transactionPostingProcessor,
+        TransactionIdempotencyResolver transactionIdempotencyResolver
     ) {
         this.accountRepository = accountRepository;
         this.accountBalanceRepository = accountBalanceRepository;
         this.bankTransactionRepository = bankTransactionRepository;
         this.transactionPostingProcessor = transactionPostingProcessor;
+        this.transactionIdempotencyResolver = transactionIdempotencyResolver;
     }
 
     @Transactional
     public TransferResult deposit(DepositCommand command) {
+        TransferResult existingResult = resolveExistingResult(
+            command.requestId(),
+            command.idempotencyKey(),
+            TransactionType.DEPOSIT
+        );
+        if (existingResult != null) {
+            return existingResult;
+        }
+
         validateAmount(command.amount());
 
         Account account = loadAccount(command.accountNo());
@@ -75,6 +88,15 @@ public class TransferApplicationService {
 
     @Transactional
     public TransferResult withdraw(WithdrawalCommand command) {
+        TransferResult existingResult = resolveExistingResult(
+            command.requestId(),
+            command.idempotencyKey(),
+            TransactionType.WITHDRAWAL
+        );
+        if (existingResult != null) {
+            return existingResult;
+        }
+
         validateAmount(command.amount());
 
         Account account = loadAccount(command.accountNo());
@@ -104,6 +126,15 @@ public class TransferApplicationService {
 
     @Transactional
     public TransferResult transfer(TransferCommand command) {
+        TransferResult existingResult = resolveExistingResult(
+            command.requestId(),
+            command.idempotencyKey(),
+            TransactionType.TRANSFER
+        );
+        if (existingResult != null) {
+            return existingResult;
+        }
+
         validateAmount(command.amount());
 
         Account sourceAccount = loadAccount(command.sourceAccountNo());
@@ -187,5 +218,15 @@ public class TransferApplicationService {
             OffsetDateTime.now(),
             description
         );
+    }
+
+    private TransferResult resolveExistingResult(
+        String requestId,
+        String idempotencyKey,
+        TransactionType transactionType
+    ) {
+        return transactionIdempotencyResolver.resolve(requestId, idempotencyKey, transactionType)
+            .map(TransferResult::from)
+            .orElse(null);
     }
 }

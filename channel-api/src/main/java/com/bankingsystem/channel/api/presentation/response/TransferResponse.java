@@ -13,10 +13,11 @@ public record TransferResponse(
     LocalDate businessDate,
     OffsetDateTime occurredAt,
     OffsetDateTime postedAt,
-    String description
+    String description,
+    String traceId
 ) {
 
-    public static TransferResponse from(TransferResult result) {
+    public static TransferResponse from(TransferResult result, String traceId) {
         return new TransferResponse(
             result.transactionId(),
             result.transactionType().name(),
@@ -26,7 +27,8 @@ public record TransferResponse(
             result.businessDate(),
             result.occurredAt(),
             result.postedAt(),
-            result.description()
+            result.description(),
+            traceId
         );
     }
 }

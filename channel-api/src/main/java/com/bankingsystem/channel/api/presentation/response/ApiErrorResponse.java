@@ -6,6 +6,7 @@ public record ApiErrorResponse(
     String code,
     String message,
     String path,
-    OffsetDateTime timestamp
+    OffsetDateTime timestamp,
+    String traceId
 ) {
 }

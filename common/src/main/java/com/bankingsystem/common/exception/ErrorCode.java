@@ -7,6 +7,7 @@ public enum ErrorCode {
     CURRENCY_MISMATCH("CURRENCY_MISMATCH", "계좌 통화와 요청 통화가 일치하지 않습니다.", 400),
     INSUFFICIENT_BALANCE("INSUFFICIENT_BALANCE", "출금 가능 잔액이 부족합니다.", 409),
     SAME_ACCOUNT_TRANSFER("SAME_ACCOUNT_TRANSFER", "출금 계좌와 입금 계좌는 같을 수 없습니다.", 400),
+    IDEMPOTENCY_CONFLICT("IDEMPOTENCY_CONFLICT", "요청 식별자 또는 멱등 키가 다른 거래와 충돌합니다.", 409),
     VALIDATION_ERROR("VALIDATION_ERROR", "요청값 검증에 실패했습니다.", 400),
     INTERNAL_SERVER_ERROR("INTERNAL_SERVER_ERROR", "서버 내부 오류가 발생했습니다.", 500);
 

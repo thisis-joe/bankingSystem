@@ -1,9 +1,12 @@
 package com.bankingsystem.channel.api.presentation.controller;
 
+import com.bankingsystem.channel.api.application.support.ChannelApiConstants;
+import com.bankingsystem.channel.api.application.support.RequestAuditSupport;
 import com.bankingsystem.channel.api.presentation.request.DepositRequest;
 import com.bankingsystem.channel.api.presentation.request.TransferRequest;
 import com.bankingsystem.channel.api.presentation.request.WithdrawalRequest;
 import com.bankingsystem.channel.api.presentation.response.TransferResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import com.bankingsystem.transaction.domain.model.ChannelType;
 import com.bankingsystem.transfer.application.command.DepositCommand;
 import com.bankingsystem.transfer.application.command.TransferCommand;
@@ -31,8 +34,9 @@ public class TransactionController {
     @PostMapping("/accounts/{accountNo}/deposit")
     public TransferResponse deposit(
         @PathVariable String accountNo,
-        @RequestHeader("X-Request-Id") String requestId,
-        @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
+        @RequestHeader(ChannelApiConstants.REQUEST_ID_HEADER) String requestId,
+        @RequestHeader(value = ChannelApiConstants.IDEMPOTENCY_KEY_HEADER, required = false) String idempotencyKey,
+        HttpServletRequest httpServletRequest,
         @Valid @RequestBody DepositRequest request
     ) {
         TransferResult result = transferApplicationService.deposit(new DepositCommand(
@@ -44,14 +48,16 @@ public class TransactionController {
             ChannelType.OPEN_API,
             request.description()
         ));
-        return TransferResponse.from(result);
+        RequestAuditSupport.bindTransactionId(httpServletRequest, result.transactionId());
+        return TransferResponse.from(result, RequestAuditSupport.resolveTraceId(httpServletRequest));
     }
 
     @PostMapping("/accounts/{accountNo}/withdraw")
     public TransferResponse withdraw(
         @PathVariable String accountNo,
-        @RequestHeader("X-Request-Id") String requestId,
-        @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
+        @RequestHeader(ChannelApiConstants.REQUEST_ID_HEADER) String requestId,
+        @RequestHeader(value = ChannelApiConstants.IDEMPOTENCY_KEY_HEADER, required = false) String idempotencyKey,
+        HttpServletRequest httpServletRequest,
         @Valid @RequestBody WithdrawalRequest request
     ) {
         TransferResult result = transferApplicationService.withdraw(new WithdrawalCommand(
@@ -63,13 +69,15 @@ public class TransactionController {
             ChannelType.OPEN_API,
             request.description()
         ));
-        return TransferResponse.from(result);
+        RequestAuditSupport.bindTransactionId(httpServletRequest, result.transactionId());
+        return TransferResponse.from(result, RequestAuditSupport.resolveTraceId(httpServletRequest));
     }
 
     @PostMapping("/transfer")
     public TransferResponse transfer(
-        @RequestHeader("X-Request-Id") String requestId,
-        @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
+        @RequestHeader(ChannelApiConstants.REQUEST_ID_HEADER) String requestId,
+        @RequestHeader(value = ChannelApiConstants.IDEMPOTENCY_KEY_HEADER, required = false) String idempotencyKey,
+        HttpServletRequest httpServletRequest,
         @Valid @RequestBody TransferRequest request
     ) {
         TransferResult result = transferApplicationService.transfer(new TransferCommand(
@@ -82,6 +90,7 @@ public class TransactionController {
             ChannelType.OPEN_API,
             request.description()
         ));
-        return TransferResponse.from(result);
+        RequestAuditSupport.bindTransactionId(httpServletRequest, result.transactionId());
+        return TransferResponse.from(result, RequestAuditSupport.resolveTraceId(httpServletRequest));
     }
 }
